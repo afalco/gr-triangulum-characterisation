@@ -130,8 +130,8 @@ def get_conn() -> dict:
     params = {
         "ip":       os.environ.get("SPINQ_IP", "10.30.227.5"),
         "port":     os.environ.get("SPINQ_PORT", "55444"),
-        "account":  os.environ.get("SPINQ_ACCOUNT", "user1"),
-        "password": os.environ.get("SPINQ_PASSWORD", "lacasito99"),
+        "account":  os.environ.get("SPINQ_ACCOUNT", "USERNAME"),
+        "password": os.environ.get("SPINQ_PASSWORD", "PASSWORD"),
     }
     return params
 
