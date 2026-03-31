@@ -1,0 +1,63 @@
+# ── Artifacts (generated outputs — never committed) ─────────────────────────
+artifacts/
+*.jsonl
+*.csv
+
+# Except the canonical distribution config, which IS committed
+!artifacts/campaign_v2/campaign_distributions.json
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+pip-wheel-metadata/
+*.whl
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.conda/
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Credentials — NEVER commit these ─────────────────────────────────────────
+*.env
+.env.*
+secrets.*
+credentials.*
+spinq_credentials.*
+*.password
+*.token
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── LaTeX auxiliary files ─────────────────────────────────────────────────────
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
+# ── Campaign session markers ──────────────────────────────────────────────────
+artifacts/campaign_v2/.simulation_verified

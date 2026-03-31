@@ -1,0 +1,13 @@
+name: spinq-gr
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy>=1.24
+  - scipy>=1.10
+  - pandas>=2.0
+  - pip
+  - pip:
+    - jsonlines>=3.1
+    - grover-rudolph-practical-implementation @ git+https://github.com/afalco/grover-rudolph-practical-implementation.git

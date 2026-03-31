@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use this pipeline, please cite the companion paper."
+title: "Grover-Rudolph Triangulum Characterisation Campaign (v2)"
+version: 2.0.0
+date-released: 2026-03-31
+license: MIT
+repository-code: https://github.com/afalco/gr-triangulum-characterisation
+authors:
+  - family-names: Falcó
+    given-names: Antonio
+    affiliation: Universidad CEU Cardenal Herrera, Spain
+    email: antonio.falco@uchceu.es
+  - family-names: Falcó-Pomares
+    given-names: Daniela
+  - family-names: Latorre
+    given-names: Juan-Carlos
+  - family-names: Feng
+    given-names: Yuefeng
+    affiliation: SpinQ Technology
+references:
+  - type: software
+    title: "Grover-Rudolph Practical Implementation"
+    repository-code: https://github.com/afalco/grover-rudolph-practical-implementation
+  - type: article
+    title: "A Rigorous and Self-Contained Proof of the Grover-Rudolph State Preparation Algorithm"
+    authors:
+      - family-names: Falcó
+        given-names: Antonio
+      - family-names: Falcó-Pomares
+        given-names: Daniela
+      - family-names: Matthies
+        given-names: Hermann G.
+    year: 2026
+    identifiers:
+      - type: other
+        value: arXiv:2601.17930

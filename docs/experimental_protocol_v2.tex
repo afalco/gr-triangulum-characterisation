@@ -1,0 +1,952 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{xurl}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc,
+                decorations.pathreplacing}
+\usepackage{quantikz}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{mdframed}
+\usepackage{colortbl}
+\usepackage{caption}
+
+\providecommand{\dg}{\ensuremath{{}^{\circ}}}
+\newcommand{\Ry}{R_y}
+\renewcommand{\ket}[1]{|#1\rangle}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\Fid}{\operatorname{Fid}}
+\newcommand{\HS}{H_{\mathrm{S}}}
+
+%% Framed environments
+\newmdenv[
+  linecolor=black!40,
+  backgroundcolor=gray!5,
+  roundcorner=4pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+]{protocolbox}
+
+\newmdenv[
+  linecolor=blue!50!black,
+  backgroundcolor=blue!4,
+  roundcorner=4pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+]{notebox}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\textit{Supplementary Material: Extended Experimental Protocol v2.0}}
+\fancyhead[R]{\small\textit{Grover--Rudolph Characterisation on SpinQ Triangulum}}
+\fancyfoot[C]{\thepage}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor=blue!60!black,
+  citecolor=blue!60!black
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  rulecolor=\color{black!30},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!60!black},
+  language=Python
+}
+
+\definecolor{refcolor}{RGB}{220,235,220}
+\definecolor{newcolor}{RGB}{210,225,245}
+
+\begin{document}
+
+%%--------------------------------------------------------------
+\begin{center}
+  {\LARGE\bfseries Supplementary Material}\\[0.6em]
+  {\Large Extended Experimental Protocol for the\\[0.2em]
+  Grover--Rudolph Hardware Characterisation Campaign\\[0.2em]
+  on the SpinQ Triangulum Platform}\\[1.0em]
+  {\normalsize Antonio Falcó, Daniela Falcó-Pomares,
+   Juan-Carlos Latorre, Yuefeng Feng, \textit{et al.}}\\[0.4em]
+  {\small \textit{Companion to:}
+  ``Practical Grover--Rudolph state preparation on a 3-qubit NMR
+  quantum computer: from rigorous ancilla-free compilation to staged
+  experimental diagnostics''}\\[0.3em]
+  {\small Version 2.0 --- \today}
+\end{center}
+
+\bigskip
+
+%%--------------------------------------------------------------
+\begin{abstract}
+This document provides the complete experimental protocol for the
+extended Grover--Rudolph characterisation campaign on the SpinQ
+Triangulum 3-qubit NMR quantum computer.
+The campaign extends the first study (Protocol v1.0) in one central
+direction: rather than characterising hardware performance for a single
+benchmark distribution, it systematically probes the full state-preparation
+capability of the device across a heterogeneous suite of seven target
+probability distributions covering the full range of Shannon entropy,
+symmetry, concentration, and structural complexity that the 3-qubit
+Grover--Rudolph construction can address.
+This broader characterisation allows for a distribution-dependent
+performance map of the Triangulum, separates hardware-generic error
+from circuit-structure-specific error, and provides a robust statistical
+baseline for cross-platform comparison.
+The campaign is designed for automated execution: a parametric pipeline
+generates Grover--Rudolph angles, compiles circuits, submits jobs, and
+aggregates results for each target distribution without manual
+intervention between runs.
+The protocol is organised into seven sections:
+(\S\ref{sec:prerequisites}) prerequisites and hardware setup;
+(\S\ref{sec:distributions}) the target distribution suite;
+(\S\ref{sec:gr-engine}) the parametric Grover--Rudolph compilation engine;
+(\S\ref{sec:circuits}) circuit structure and ladder variants;
+(\S\ref{sec:automation}) automated execution pipeline;
+(\S\ref{sec:postprocessing}) data normalization, readout calibration,
+and metric computation;
+(\S\ref{sec:analysis}) cross-distribution analysis and characterisation outputs.
+\end{abstract}
+
+\tableofcontents
+
+\bigskip\hrule\bigskip
+
+%%==============================================================
+\section{Prerequisites and hardware setup}
+\label{sec:prerequisites}
+%%==============================================================
+
+\subsection{Hardware platform}
+
+The experiments are carried out on the \textbf{SpinQ Triangulum},
+a commercial 3-qubit desktop NMR quantum computer \cite{FengEtAl2022}.
+The device exposes the native gate dictionary
+$\{\Ry(\theta), X, \mathrm{CNOT}\}$.
+All higher-level operations are decomposed into this set prior to
+execution. The campaign has been designed to run on one or two
+Triangulum units simultaneously; if two units are available, the
+distribution suite can be split across devices to reduce total
+wall-clock time (see Section~\ref{sec:automation}).
+
+\begin{protocolbox}
+\textbf{Required hardware.}
+One or two SpinQ Triangulum units with firmware version recorded
+in every run log.\\[4pt]
+\textbf{Pre-session check.}
+Before each session, verify that a bare measurement (no gates)
+returns $\ket{000}$ with probability $\geq 0.98$.
+If this threshold is not met, allow $\geq 30$ minutes of thermal
+equilibration and repeat.
+\end{protocolbox}
+
+\subsection{Software dependencies}
+
+\begin{itemize}
+  \item \texttt{numpy} $\geq 1.24$
+  \item \texttt{scipy} $\geq 1.10$
+  \item \texttt{pandas} $\geq 2.0$
+  \item \texttt{jsonlines} $\geq 3.1$
+  \item SpinQ SDK (version as shipped with the unit; record in log)
+\end{itemize}
+
+\noindent Full implementation:
+\begin{center}
+  \url{https://github.com/afalco/grover-rudolph-practical-implementation}
+\end{center}
+
+\subsection{Qubit register conventions}
+
+The register is $(q_0, q_1, q_2)$ with $q_0$ as the most significant
+bit:
+\[
+  \ket{b_0 b_1 b_2} \leftrightarrow k = 4b_0 + 2b_1 + b_2,
+  \quad b_i \in \{0,1\},
+\]
+giving ordered basis
+$\{\ket{000}, \ket{001}, \ket{010}, \ket{011},
+   \ket{100}, \ket{101}, \ket{110}, \ket{111}\}$,
+indexed $k=0,\ldots,7$.
+
+%%==============================================================
+\section{Target distribution suite}
+\label{sec:distributions}
+%%==============================================================
+
+\subsection{Design rationale}
+
+The first campaign \cite{ProtocolV1} used a single symmetric
+benchmark distribution (D1 below). While informative, a single
+target cannot distinguish between hardware-generic degradation and
+circuit-structure-specific error: a device may perform well on
+symmetric, low-contrast targets yet poorly on concentrated or
+asymmetric ones. The extended campaign addresses this by probing
+seven target distributions that span the relevant axes of variation:
+
+\begin{itemize}
+  \item \textbf{Shannon entropy} $\HS(p) = -\sum_k p_k \log_2 p_k \in [0, 3]$:
+    from maximally concentrated (near 0) to uniform (3 bits).
+  \item \textbf{Symmetry:} symmetric vs.\ monotonic vs.\ bimodal
+    vs.\ unstructured.
+  \item \textbf{Contrast:} ratio of largest to smallest
+    nonzero probability, ranging from 1 (uniform) to $\gg 1$ (concentrated).
+  \item \textbf{Support size:} all 8 states active vs.\ effective
+    support on a subset.
+\end{itemize}
+
+\noindent No two distributions in the suite are close in all three
+axes simultaneously, ensuring that the hardware is genuinely
+exercised in qualitatively different regimes.
+
+\subsection{The seven target distributions}
+\label{subsec:distributions}
+
+Table~\ref{tab:distributions} defines the seven distributions.
+Each has been chosen so that its Grover--Rudolph angles are
+non-degenerate (no angle collapses to $0\dg{}$ or $180\dg{}$ except
+intentionally), and so that the suite as a whole covers the
+entropy range $[0.54, 3.00]$ bits with no large gaps.
+
+\begin{table}[H]
+\centering
+\caption{Target distribution suite. $\HS$: Shannon entropy in bits.
+Contrast: $\max_k p_k / \min_{k:\,p_k>0} p_k$.
+Distributions D5 and D6 are generated from fixed random seeds
+(see \S\ref{subsec:random}) and their values are approximate.}
+\label{tab:distributions}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{clp{4.8cm}cc}
+\toprule
+ID & Type & $p = (p_0,\ldots,p_7)$ & $\HS$ (bits) & Contrast \\
+\midrule
+\rowcolor{refcolor}
+D1 & Symmetric (reference) &
+  $(0.05, 0.10, 0.15, 0.20, 0.20, 0.15, 0.10, 0.05)$ &
+  2.77 & 4.0 \\
+D0 & Uniform &
+  $(0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125)$ &
+  3.00 & 1.0 \\
+D2 & Monotone decreasing &
+  $(0.35, 0.25, 0.15, 0.10, 0.07, 0.04, 0.03, 0.01)$ &
+  2.57 & 35.0 \\
+D3 & Bimodal &
+  $(0.02, 0.03, 0.05, 0.40, 0.40, 0.05, 0.03, 0.02)$ &
+  2.17 & 20.0 \\
+D4 & Unimodal / bell &
+  $(0.02, 0.05, 0.12, 0.31, 0.31, 0.12, 0.05, 0.02)$ &
+  2.53 & 15.5 \\
+\rowcolor{newcolor}
+D5 & Random (sparse) &
+  Dirichlet($\alpha=0.5$), seed 42 &
+  $\approx 1.8$ & $\gg 1$ \\
+\rowcolor{newcolor}
+D6 & Random (generic) &
+  Dirichlet($\alpha=1.0$), seed 137 &
+  $\approx 2.5$ & $\sim 10$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textcolor{blue!60!black}{\textbf{Note.}}
+Distributions D5 and D6 (shaded blue) are generated
+programmatically from fixed seeds (see \S\ref{subsec:random})
+and must be computed once before the campaign begins.
+Their exact values must be stored in the campaign configuration
+file so that every participant uses identical targets.
+
+\subsection{Rationale for each distribution}
+
+\paragraph{D0 — Uniform.}
+The uniform distribution is the trivial fixed point of the
+Grover--Rudolph tree: all splitting angles equal $90\dg{}$ and
+the UCRy block reduces to a product of single-qubit Hadamard-like
+rotations. It provides an absolute baseline and tests whether the
+hardware can maintain equal amplitudes in the presence of crosstalk
+and relaxation.
+
+\paragraph{D1 — Symmetric (reference).}
+The distribution used in the first campaign \cite{ProtocolV1}.
+Retained as the inter-campaign anchor point. Any deviation from the
+first campaign's results in this distribution can be attributed to
+hardware drift rather than experimental design differences.
+
+\paragraph{D2 — Monotone decreasing.}
+Strong asymmetry at every level of the dyadic tree: the root angle
+($\theta_0 \approx 53\dg{}$) departs significantly from $90\dg{}$,
+and the level-1 and level-2 angles are likewise unbalanced. This
+stresses the UCRy block with highly non-uniform control rotations
+and exercises the hardware in a regime qualitatively different from
+D1.
+
+\paragraph{D3 — Bimodal.}
+Mass concentrated near two internal states ($\ket{011}$ and
+$\ket{100}$). The root split is nearly balanced ($\theta_0 \approx
+90\dg{}$), but the level-2 UCRy block must produce very small
+rotations ($\theta_{2|00}, \theta_{2|11} \to 0$) alongside large
+ones ($\theta_{2|01}, \theta_{2|10} \to 90\dg{}$). This tests
+whether the hardware can faithfully execute near-zero controlled
+rotations without crosstalk-induced leakage.
+
+\paragraph{D4 — Unimodal / bell.}
+A unimodal distribution that is close to D1 in entropy but has a
+higher contrast and a more pronounced central peak. It serves as
+an intermediate between the symmetric reference and the bimodal
+case, and tests the device's ability to suppress tails.
+
+\paragraph{D5 — Random sparse (Dirichlet $\alpha=0.5$).}
+A randomly drawn distribution with concentration parameter below 1,
+which tends to produce sparse vectors with most mass on a few states.
+It has no exploitable symmetry and produces generically unbalanced
+trees. The low-$\alpha$ regime is relevant for practical amplitude
+encoding scenarios where the target law is irregular.
+
+\paragraph{D6 — Random generic (Dirichlet $\alpha=1.0$).}
+A randomly drawn distribution from the uniform prior over the
+probability simplex. It serves as a generic test case without
+engineered structure. Together with D5, it assesses whether the
+performance trends observed in D0--D4 generalize to arbitrary targets.
+
+\subsection{Generating the random distributions}
+\label{subsec:random}
+
+Distributions D5 and D6 are generated as follows and must be
+computed once, stored, and shared with all participants before the
+campaign:
+
+\begin{lstlisting}[caption={Deterministic generation of random distributions D5 and D6.}]
+import numpy as np
+
+def dirichlet_dist(alpha: float, seed: int,
+                   n: int = 8) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    p = rng.dirichlet(np.full(n, alpha))
+    # Clip any value below 1e-4 to avoid near-zero entries
+    p = np.clip(p, 1e-4, None)
+    return p / p.sum()
+
+D5 = dirichlet_dist(alpha=0.5, seed=42)
+D6 = dirichlet_dist(alpha=1.0, seed=137)
+
+# Persist to campaign config
+import json
+config = {"D5": D5.tolist(), "D6": D6.tolist()}
+with open("campaign_distributions.json", "w") as f:
+    json.dump(config, f, indent=2)
+\end{lstlisting}
+
+\begin{protocolbox}
+\textbf{Mandatory verification.}
+Before submitting any circuit to hardware, all participants must
+load \texttt{campaign\_distributions.json} from the shared
+repository and verify that their local values of D5 and D6
+match to at least 12 decimal places. Use the reference checksums
+provided in Appendix~\ref{sec:checksums}.
+\end{protocolbox}
+
+%%==============================================================
+\section{Parametric Grover--Rudolph compilation engine}
+\label{sec:gr-engine}
+%%==============================================================
+
+\subsection{General angle formula}
+
+For a general 3-qubit target $p = (p_0, \ldots, p_7)$, the
+Grover--Rudolph rotation angles are obtained from the dyadic
+conditional masses \cite{GroverRudolph2002,
+FalcoFalcoPomaresMatthies2026}. Define the partial sums:
+\begin{align}
+  s_L &= p_0+p_1+p_2+p_3, \quad s_R = p_4+p_5+p_6+p_7, \\
+  s_{LL} &= p_0+p_1, \quad s_{LR} = p_2+p_3, \quad
+  s_{RL} = p_4+p_5, \quad s_{RR} = p_6+p_7.
+\end{align}
+The rotation angles are then:
+\begin{align}
+  \theta_0 &= 2\arccos\!\sqrt{s_L},
+  \label{eq:theta0-gen}\\
+  \theta_{1|0} &= 2\arccos\!\sqrt{s_{LL}/s_L}, \qquad
+  \theta_{1|1}  = 2\arccos\!\sqrt{s_{RL}/s_R},
+  \label{eq:theta1-gen}\\
+  \theta_{2|b_0 b_1} &= 2\arccos\!\sqrt{p_{b_0 b_1 0} /
+    (p_{b_0 b_1 0} + p_{b_0 b_1 1})},
+    \quad (b_0, b_1) \in \{00, 01, 10, 11\},
+  \label{eq:theta2-gen}
+\end{align}
+where $p_{b_0 b_1 b_2}$ denotes $p_k$ with
+$k = 4b_0 + 2b_1 + b_2$.
+If $p_{b_0 b_1 0} + p_{b_0 b_1 1} = 0$ (zero subtree mass),
+set $\theta_{2|b_0 b_1} = 0$ by convention.
+
+\subsection{Walsh--Hadamard transform for the UCRy block}
+
+The four level-2 angles are decomposed into the ancilla-free
+ladder representation via the Walsh--Hadamard-type transform
+\cite{FalcoFalcoPomaresMatthies2026}. Let
+$\alpha_j = \theta_{2|j}/2$ for $j \in \{00, 01, 10, 11\}$
+(ordered as binary $j = 0, 1, 2, 3$). The ladder angles are:
+\begin{equation}
+  \begin{pmatrix} \phi_0 \\ \phi_1 \\ \phi_2 \\ \phi_3 \end{pmatrix}
+  = \frac{1}{4}
+  \begin{pmatrix}
+    1 & 1 & 1 & 1 \\
+    1 & -1 & 1 & -1 \\
+    1 & 1 & -1 & -1 \\
+    1 & -1 & -1 & 1
+  \end{pmatrix}
+  \begin{pmatrix}
+    \alpha_{00} \\ \alpha_{01} \\ \alpha_{10} \\ \alpha_{11}
+  \end{pmatrix}.
+  \label{eq:wht}
+\end{equation}
+The full rotation angles commanded to the hardware are
+$2\phi_i$ (in degrees).
+
+\subsection{Reference implementation}
+
+\begin{lstlisting}[caption={Parametric GR angle computation for any 3-qubit distribution.}]
+import numpy as np
+
+def gr_angles(p: np.ndarray) -> dict:
+    """
+    Compute all Grover-Rudolph angles for a 3-qubit
+    probability vector p of length 8.
+    Returns angles in degrees.
+    """
+    assert len(p) == 8 and np.isclose(p.sum(), 1.0)
+
+    sL  = p[0]+p[1]+p[2]+p[3]
+    sR  = 1.0 - sL
+    sLL = p[0]+p[1]; sLR = p[2]+p[3]
+    sRL = p[4]+p[5]; sRR = p[6]+p[7]
+
+    def safe_arccos(num, den):
+        if den < 1e-15:
+            return 0.0
+        return 2 * np.degrees(np.arccos(np.sqrt(
+            np.clip(num/den, 0.0, 1.0))))
+
+    theta0   = safe_arccos(sL, 1.0)
+    theta1_0 = safe_arccos(sLL, sL)
+    theta1_1 = safe_arccos(sRL, sR)
+    theta2   = {
+        '00': safe_arccos(p[0], sLL),
+        '01': safe_arccos(p[2], sLR),
+        '10': safe_arccos(p[4], sRL),
+        '11': safe_arccos(p[6], sRR),
+    }
+
+    # Walsh-Hadamard transform for UCRy ladder
+    alpha = np.array([theta2['00'], theta2['01'],
+                      theta2['10'], theta2['11']]) / 2.0
+    H = np.array([[1,1,1,1],[1,-1,1,-1],
+                  [1,1,-1,-1],[1,-1,-1,1]]) / 4.0
+    phi = H @ alpha  # ladder half-angles in degrees
+
+    return {
+        'theta0':   theta0,
+        'theta1_0': theta1_0,
+        'theta1_1': theta1_1,
+        'theta2':   theta2,
+        'phi':      phi,          # ladder half-angles
+        'ladder_angles': 2*phi,   # full angles for hardware
+    }
+\end{lstlisting}
+
+\begin{protocolbox}
+\textbf{Verification step (mandatory for every distribution).}
+After computing angles, run the ideal simulator and confirm
+$\TV(q_{\mathrm{sim}}, p) \leq 10^{-10}$ and
+$\Fid(q_{\mathrm{sim}}, p) = 1.000$.
+Any failure indicates a formula or implementation error;
+do not proceed to hardware until resolved.
+\end{protocolbox}
+
+%%==============================================================
+\section{Circuit structure and ladder variants}
+\label{sec:circuits}
+%%==============================================================
+
+\subsection{Diagnostic stages}
+
+The three nested diagnostic stages $L0$, $L01$, FULL are preserved
+from the first campaign and applied identically to every
+distribution in the suite.
+Their definitions in terms of the dyadic tree levels are unchanged:
+$L0$ applies only $\theta_0$; $L01$ applies $\theta_0$ and the
+level-1 angles; FULL applies the complete construction.
+
+The gate counts depend only on the stage and ladder, not on the
+specific distribution, since the circuit topology is fixed by the
+UCRy decomposition:
+
+\begin{table}[H]
+\centering
+\caption{Gate counts per stage and ladder (identical for all
+  distributions D0--D6).}
+\label{tab:gatecounts}
+\begin{tabular}{lcccc}
+\toprule
+Stage & Total gates & $\Ry$ & CNOT & $X$ \\
+\midrule
+$L0$    &  3 &  3 & 0 & 0 \\
+$L01$   & 13 &  7 & 4 & 2 \\
+FULL-A  & 21 & 11 & 8 & 2 \\
+FULL-B  & 21 & 11 & 8 & 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ladder variants A and B}
+
+The two FULL circuits differ only in the Gray-code ordering of the
+two-control UCRy block on $q_2$, as in the first campaign:
+
+\begin{itemize}
+  \item \textbf{Ladder A.} UCRy control sequence:
+    $(q_1, q_0, q_0, q_0)$.
+    Sub-rotation order:
+    $\Ry(2\phi_0)$, CNOT($q_1$),
+    $\Ry(2\phi_3)$, CNOT($q_0$),
+    $\Ry(2\phi_2)$, CNOT($q_0$),
+    $\Ry(2\phi_1)$, CNOT($q_0$).
+
+  \item \textbf{Ladder B.} UCRy control sequence:
+    $(q_1, q_1, q_0, q_0)$.
+    Sub-rotation order:
+    $\Ry(2\phi_0)$, CNOT($q_1$),
+    $\Ry(2\phi_1)$, CNOT($q_1$),
+    $\Ry(2\phi_2)$, CNOT($q_0$),
+    $\Ry(2\phi_3)$, CNOT($q_0$).
+\end{itemize}
+
+Note that the ladder angles $\phi_i$ now depend on the target
+distribution through equation~\eqref{eq:wht}, so ladders A and B
+produce physically different pulse schedules for each distribution
+in the suite. The unitary equivalence is preserved in all cases.
+
+%%==============================================================
+\section{Automated execution pipeline}
+\label{sec:automation}
+%%==============================================================
+
+\subsection{Campaign structure}
+
+The full campaign is organized as follows:
+
+\begin{itemize}
+  \item \textbf{Distributions:} 7 (D0--D6).
+  \item \textbf{Stages per distribution:} 3 ($L0$, $L01$, FULL).
+  \item \textbf{Ladder variants (FULL only):} 2 (A, B).
+  \item \textbf{Runs per (distribution, stage, ladder):} 25.
+  \item \textbf{Total runs:} $7 \times (50 + 50 + 25 + 25) = 1050$.
+\end{itemize}
+
+Compared with the first campaign (150 runs, 1 distribution), the
+extended campaign is a factor-7 scale-up in total hardware time,
+motivating the automated pipeline described below.
+
+\subsection{Pipeline architecture}
+
+The pipeline is organised as four independent modules that are
+called sequentially for each (distribution, stage, ladder) triplet:
+
+\begin{enumerate}[label=\arabic*.]
+  \item \textbf{Angle engine.} Loads the target distribution,
+    calls \texttt{gr\_angles()}, and returns the full angle dictionary.
+  \item \textbf{Circuit compiler.} Takes the angle dictionary and
+    stage/ladder specification, instantiates the gate sequence, and
+    serializes it to the platform's JSON circuit format.
+  \item \textbf{Job executor.} Submits the compiled circuit to the
+    Triangulum SDK, polls until completion, retrieves raw counts,
+    and appends the result to the JSONL log.
+  \item \textbf{Run validator.} Checks that the returned count sum
+    is within $1\%$ of the nominal shot number and that no
+    error status was returned; marks the run as \texttt{failed}
+    if either condition is violated.
+\end{enumerate}
+
+\subsection{Orchestrator}
+
+\begin{lstlisting}[caption={Campaign orchestrator: iterates over all
+  distributions, stages, and ladders.}]
+import json
+import itertools
+
+DISTRIBUTIONS = {
+    'D0': np.full(8, 0.125),
+    'D1': np.array([0.05,0.10,0.15,0.20,
+                    0.20,0.15,0.10,0.05]),
+    'D2': np.array([0.35,0.25,0.15,0.10,
+                    0.07,0.04,0.03,0.01]),
+    'D3': np.array([0.02,0.03,0.05,0.40,
+                    0.40,0.05,0.03,0.02]),
+    'D4': np.array([0.02,0.05,0.12,0.31,
+                    0.31,0.12,0.05,0.02]),
+    'D5': load_from_config('D5'),   # from campaign_distributions.json
+    'D6': load_from_config('D6'),
+}
+STAGES   = ['L0', 'L01', 'FULL']
+LADDERS  = {'L0': ['A'], 'L01': ['A'], 'FULL': ['A', 'B']}
+N_RUNS   = 25   # runs per (dist, stage, ladder)
+LOGFILE  = 'campaign_v2_runs.jsonl'
+
+def run_campaign():
+    run_index = 0
+    for dist_id, p in DISTRIBUTIONS.items():
+        angles = gr_angles(p)
+        verify_simulation(p, angles)       # mandatory check
+        for stage in STAGES:
+            for ladder in LADDERS[stage]:
+                circuit = compile_circuit(angles, stage, ladder)
+                for rep in range(1, N_RUNS + 1):
+                    run_index += 1
+                    record = execute_and_log(
+                        circuit=circuit,
+                        dist_id=dist_id,
+                        p_target=p,
+                        stage=stage,
+                        ladder=ladder,
+                        repeat=rep,
+                        run_index=run_index,
+                    )
+                    log_run(record, LOGFILE)
+
+if __name__ == '__main__':
+    run_campaign()
+\end{lstlisting}
+
+\subsection{Execution order and drift mitigation}
+
+To mitigate systematic hardware drift across the campaign, runs
+are interleaved across distributions rather than executing all
+runs for one distribution before moving to the next. The
+recommended block structure is:
+
+\begin{enumerate}[label=\arabic*.]
+  \item For each stage ($L0$, $L01$, FULL), execute one block of 5 runs
+    per distribution per ladder, cycling through all 7 distributions.
+  \item Repeat the full cycle 5 times to accumulate 25 runs per group.
+  \item After every 100 runs, perform a bare-state fidelity check;
+    suspend if $P(\ket{000}) < 0.97$.
+\end{enumerate}
+
+This interleaved structure ensures that any slow drift in the
+device affects all distributions approximately equally, so
+inter-distribution comparisons remain valid.
+
+\subsection{Run log schema}
+
+Each run is logged as a single JSON object appended to
+\texttt{campaign\_v2\_runs.jsonl}. In addition to the fields
+from Protocol~v1.0, the following fields are added:
+
+\begin{longtable}{lll}
+\toprule
+Field & Type & Description \\
+\midrule
+\texttt{dist\_id}     & string  & Distribution identifier (D0--D6) \\
+\texttt{dist\_type}   & string  & Human-readable type (e.g.\ \texttt{uniform}) \\
+\texttt{p\_target}    & array   & Target probability vector (8 floats) \\
+\texttt{shannon\_entropy} & float & $\HS(p)$ in bits \\
+\texttt{contrast}     & float   & $\max_k p_k / \min_{k:p_k>0} p_k$ \\
+\texttt{angles}       & object  & Full angle dictionary from \texttt{gr\_angles()} \\
+\texttt{run\_index}   & integer & Global run index across the full campaign \\
+\bottomrule
+\end{longtable}
+
+%%==============================================================
+\section{Data normalization, readout calibration, and metrics}
+\label{sec:postprocessing}
+%%==============================================================
+
+\subsection{Probability normalization and marginals}
+
+Identical to Protocol v1.0. Raw counts are normalized to
+probability vectors via equation~\eqref{eq:normalize}; per-qubit
+marginals are computed via equation~\eqref{eq:marginals}.
+
+\begin{equation}
+  q_k = \frac{c_k}{\sum_{j=0}^{7} c_j}, \quad k = 0, \ldots, 7.
+  \label{eq:normalize}
+\end{equation}
+\begin{equation}
+  P(q_j = b) = \sum_{\substack{k=0\\ b_j(k)=b}}^{7} q_k.
+  \label{eq:marginals}
+\end{equation}
+
+\subsection{Readout calibration}
+
+The $L0$ stage provides a per-qubit assignment error estimate for
+each distribution run. Since the $L0$ state is identical for all
+distributions (only $q_0$ is active), the readout error
+estimates from D0--D6 can be pooled to obtain a more precise
+characterisation of the device's measurement bias across the
+campaign:
+\begin{equation}
+  \varepsilon_{0\to1}(Q_j) =
+    1 - \frac{1}{7 \cdot 50}
+    \sum_{\text{dist}} \sum_{\text{run}} P_{\mathrm{exp}}(q_j=0)
+    \Big|_{L0, \text{dist}},
+  \quad j \in \{1, 2\}.
+  \label{eq:readout-pooled}
+\end{equation}
+This pooled estimate uses $7 \times 50 = 350$ $L0$ runs and
+gives a substantially tighter characterisation of readout error
+than the 50 runs available in the first campaign.
+
+\subsection{Run-level metrics}
+
+For each run, compute the six metrics as in Protocol v1.0:
+
+\begin{align}
+  \TV(p, q) &= \tfrac{1}{2} \sum_{k=0}^{7} |p_k - q_k|,
+  \label{eq:tv}\\
+  \|p-q\|_2 &= \bigl(\textstyle\sum_{k=0}^{7}(p_k-q_k)^2\bigr)^{1/2},
+  \label{eq:l2}\\
+  \Fid(p, q) &= \bigl(\textstyle\sum_{k=0}^{7}\sqrt{p_k q_k}\bigr)^2.
+  \label{eq:fidelity}
+\end{align}
+
+Compute against both the simulator output and the target:
+\texttt{tv\_vs\_sim}, \texttt{l2\_vs\_sim}, \texttt{fidelity\_vs\_sim},
+\texttt{tv\_vs\_target}, \texttt{l2\_vs\_target},
+\texttt{fidelity\_vs\_target}.
+
+\subsection{Output data artifacts}
+
+The campaign produces the following artifacts:
+
+\begin{enumerate}[label=\arabic*.]
+  \item \textbf{\texttt{campaign\_v2\_runs.jsonl}} --- complete
+    per-run records for all 1050 runs.
+  \item \textbf{\texttt{runs\_flat\_v2.csv}} --- one row per run,
+    all metric and probability fields, with additional columns
+    \texttt{dist\_id}, \texttt{shannon\_entropy}, \texttt{contrast}.
+  \item \textbf{\texttt{summary\_by\_dist\_stage.csv}} --- one row
+    per (dist\_id, stage, ladder) group ($7 \times 4 = 28$ rows),
+    with means and standard deviations of all metrics.
+  \item \textbf{\texttt{summary\_by\_dist\_FULL.csv}} --- one row
+    per distribution at the FULL stage only ($7 \times 2 = 14$ rows),
+    used for the cross-distribution characterisation analysis.
+  \item \textbf{\texttt{circuits\_flat\_v2.csv}} --- one row per
+    (dist\_id, stage, ladder) combination (28 rows), with angle
+    values, gate counts, and circuit payloads.
+\end{enumerate}
+
+%%==============================================================
+\section{Cross-distribution analysis and characterisation outputs}
+\label{sec:analysis}
+%%==============================================================
+
+\subsection{Primary characterisation plot}
+
+The central output of the extended campaign is a
+\emph{performance map} of the Triangulum: a plot of mean FULL-stage
+classical fidelity vs.\ Shannon entropy $\HS(p)$, with one point per
+distribution and error bars equal to the standard deviation over 25
+runs per ladder. Ladders A and B are shown separately.
+This plot provides a quantitative answer to the question of how
+hardware performance varies with target complexity.
+
+\begin{protocolbox}
+\textbf{Expected qualitative behaviour.}
+Based on the first campaign and the structure of the circuits,
+we anticipate a monotone-increasing trend (higher entropy
+$\Rightarrow$ less demanding UCRy block $\Rightarrow$ higher
+fidelity), with D0 (uniform) achieving the highest fidelity and
+D3 or D5 (bimodal / sparse) the lowest. Deviations from this
+trend are scientifically informative and should be reported and
+discussed.
+\end{protocolbox}
+
+\subsection{Stage-wise degradation per distribution}
+
+For each distribution, compute the stage-wise TV distances and
+fidelities as in the first campaign, and report the degradation
+trajectory $(L0 \to L01 \to \mathrm{FULL})$.
+A distribution for which the $L0 \to L01$ step is larger than the
+$L01 \to \mathrm{FULL}$ step (in TV units) exhibits primarily
+level-1 control error; the reverse pattern implicates the UCRy
+block.
+
+\subsection{Ladder A vs.\ B comparison per distribution}
+
+Apply the two-sided Mann--Whitney $U$ test for ladders A vs.\ B
+at the FULL stage, independently for each distribution and each
+metric. Summarise results in a $7 \times 3$ table (distributions
+$\times$ metrics) of $p$-values. Test for a consistent pattern:
+if ladder ordering matters more for concentrated distributions
+(D3, D5) than for smooth ones (D0, D1), this suggests that
+near-zero controlled rotations are particularly sensitive to
+Gray-code ordering.
+
+\subsection{Readout error characterisation across distributions}
+
+Plot $\Delta\TV = \TV(q_{\mathrm{exp}}, p) -
+\TV(q_{\mathrm{exp}}, q_{\mathrm{sim}})$ at stage $L0$ as a
+function of distribution. Since the $L0$ circuit is identical
+for all distributions, any variation in $\Delta\TV$ across
+distributions is attributable to run-to-run hardware variability,
+not to the target itself. This provides a direct estimate of
+the precision of the readout error characterisation.
+
+\subsection{Regression: fidelity vs.\ circuit properties}
+
+Fit a simple linear model:
+\begin{equation}
+  \Fid_{\mathrm{FULL}} \approx
+    \beta_0
+    + \beta_1 \HS(p)
+    + \beta_2 \log\mathrm{Contrast}(p)
+    + \beta_3 \max_j |\theta_{2|j} - 90\dg{}|
+    + \varepsilon.
+  \label{eq:regression}
+\end{equation}
+Report the estimated coefficients, $R^2$, and the 95\% confidence
+intervals. This model, while approximate, quantifies the relative
+contribution of entropy, contrast, and UCRy angle extremity to
+hardware-level fidelity loss.
+
+\begin{lstlisting}[caption={Cross-distribution regression.}]
+import numpy as np
+from scipy import stats
+
+def characterisation_regression(summary_df):
+    """
+    summary_df: one row per distribution at FULL stage.
+    Columns: shannon_entropy, log_contrast,
+             max_ucry_deviation, fidelity_vs_target_mean
+    """
+    X = summary_df[['shannon_entropy',
+                     'log_contrast',
+                     'max_ucry_deviation']].values
+    X = np.column_stack([np.ones(len(X)), X])
+    y = summary_df['fidelity_vs_target_mean'].values
+
+    beta, res, rank, sv = np.linalg.lstsq(X, y,
+                                            rcond=None)
+    y_hat = X @ beta
+    ss_res = np.sum((y - y_hat)**2)
+    ss_tot = np.sum((y - y.mean())**2)
+    r2 = 1 - ss_res / ss_tot
+
+    return {'beta': beta, 'R2': r2}
+\end{lstlisting}
+
+%%==============================================================
+\section*{Data and code availability}
+%%==============================================================
+
+All data artifacts and the full automation pipeline will be
+released at:
+\begin{center}
+  \url{https://github.com/afalco/grover-rudolph-practical-implementation}
+\end{center}
+The repository will include a \texttt{campaigns/v2/} subdirectory
+with the orchestrator, angle engine, and post-processing scripts,
+as well as the fixed campaign configuration file
+\texttt{campaign\_distributions.json}.
+
+%%==============================================================
+\appendix
+
+\section{Distribution checksums}
+\label{sec:checksums}
+
+After generating D5 and D6 via the procedure in
+Section~\ref{subsec:random}, verify the following SHA-256 checksums
+of the JSON-serialised vectors (compact format, 15 decimal places):
+
+\medskip
+\noindent\texttt{D5:} \texttt{[to be completed after generation]}\\
+\texttt{D6:} \texttt{[to be completed after generation]}
+
+\medskip
+\noindent These values will be committed to the repository before
+the campaign begins and serve as the reference for all participants.
+
+\section{Expected results: first campaign anchor (D1)}
+\label{sec:anchor}
+
+For distribution D1 (the reference from Protocol v1.0), the
+extended campaign should reproduce the following results within
+$\pm 2\sigma$ of the first campaign values. Systematic deviations
+indicate hardware drift between campaigns.
+
+\begin{table}[H]
+\centering
+\caption{First-campaign reference values for D1 (25 runs per ladder per stage).}
+\begin{tabular}{lcccc}
+\toprule
+Stage & Ladder & TV vs target & $\ell^2$ vs target & Fidelity vs target \\
+\midrule
+\multirow{2}{*}{$L0$}
+  & A & $0.522\pm0.039$ & $0.455\pm0.031$ & $0.657\pm0.043$ \\
+  & B & $0.530\pm0.041$ & $0.465\pm0.032$ & $0.647\pm0.043$ \\
+\multirow{2}{*}{$L01$}
+  & A & $0.352\pm0.038$ & $0.299\pm0.030$ & $0.804\pm0.036$ \\
+  & B & $0.345\pm0.046$ & $0.290\pm0.035$ & $0.817\pm0.048$ \\
+\multirow{2}{*}{FULL}
+  & A & $0.234\pm0.047$ & $0.195\pm0.037$ & $0.916\pm0.033$ \\
+  & B & $0.232\pm0.059$ & $0.201\pm0.047$ & $0.909\pm0.038$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%%==============================================================
+\begin{thebibliography}{9}
+
+\bibitem{GroverRudolph2002}
+Grover, L., Rudolph, T.: Creating superpositions that correspond to
+efficiently integrable probability distributions.
+arXiv:quant-ph/0208112 (2002)
+
+\bibitem{FalcoFalcoPomaresMatthies2026}
+Falcó, A., Falcó-Pomares, D., Matthies, H.G.:
+A rigorous and self-contained proof of the Grover--Rudolph state
+preparation algorithm. arXiv:2601.17930 (2026).
+Submitted to AIMS Mathematics
+
+\bibitem{FengEtAl2022}
+Feng, G., Hou, S.-Y., Zou, H., et al.:
+SpinQ Triangulum: a commercial three-qubit desktop quantum computer.
+arXiv:2202.02983 (2022)
+
+\bibitem{ProtocolV1}
+Falcó, A., Falcó-Pomares, D., Latorre, J.-C., et al.:
+Supplementary Material: Experimental Protocol for the First
+Grover--Rudolph Campaign on the SpinQ Triangulum Platform.
+Version 1.0 (2026). Available at the companion repository.
+
+\end{thebibliography}
+
+\end{document}
