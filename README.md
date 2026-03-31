@@ -222,15 +222,6 @@ sufficient detail to allow independent replication on any compatible
 
 ---
 
-## Authors
-
-- Antonio Falcó — Universidad CEU Cardenal Herrera, Spain
-- Daniela Falcó-Pomares
-- Juan-Carlos Latorre
-- Yuefeng Feng — SpinQ Technology
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
