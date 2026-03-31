@@ -291,13 +291,19 @@ def run_hardware(angles: dict, stage: str, ladder: str,
 
 def run_bare_hardware(conn: dict, shots: int = 4096) -> np.ndarray:
     """
-    Bare identity circuit on hardware for pre-session check.
+    Bare-reference hardware check for the NMR backend.
 
-    Important: the Triangulum NMR backend does not accept explicit MEASURE
-    operations, so this circuit must contain no terminal measurements.
+    Important:
+    - Triangulum NMR does not accept explicit MEASURE operations.
+    - Some SpinQit/NMR versions also reject a completely empty circuit.
+    Therefore we use a non-empty identity circuit: X followed by X on q0.
     """
     circ = Circuit()
-    circ.allocateQubits(3)
+    q    = circ.allocateQubits(3)
+
+    # Non-empty identity circuit to avoid empty-graph compilation issues.
+    circ << (X, q[0])
+    circ << (X, q[0])
 
     comp   = get_compiler("native")
     exe    = comp.compile(circ, 0)
