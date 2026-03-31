@@ -59,7 +59,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
-\fancyhead[L]{\small\textit{Supplementary Material: Extended Experimental Protocol v2.0}}
+\fancyhead[L]{\small\textit{Supplementary Material}}
 \fancyhead[R]{\small\textit{Grover--Rudolph Characterisation on SpinQ Triangulum}}
 \fancyfoot[C]{\thepage}
 
@@ -96,8 +96,6 @@
   {\Large Extended Experimental Protocol for the\\[0.2em]
   Grover--Rudolph Hardware Characterisation Campaign\\[0.2em]
   on the SpinQ Triangulum Platform}\\[1.0em]
-  {\normalsize Antonio Falcó, Daniela Falcó-Pomares,
-   Juan-Carlos Latorre, Yuefeng Feng, \textit{et al.}}\\[0.4em]
   {\small \textit{Companion to:}
   ``Practical Grover--Rudolph state preparation on a 3-qubit NMR
   quantum computer: from rigorous ancilla-free compilation to staged
@@ -205,7 +203,7 @@ indexed $k=0,\ldots,7$.
 
 \subsection{Design rationale}
 
-The first campaign \cite{ProtocolV1} used a single symmetric
+The first campaign used a single symmetric
 benchmark distribution (D1 below). While informative, a single
 target cannot distinguish between hardware-generic degradation and
 circuit-structure-specific error: a device may perform well on
@@ -244,8 +242,8 @@ Contrast: $\max_k p_k / \min_{k:\,p_k>0} p_k$.
 Distributions D5 and D6 are generated from fixed random seeds
 (see \S\ref{subsec:random}) and their values are approximate.}
 \label{tab:distributions}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{clp{4.8cm}cc}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{clp{8cm}cc}
 \toprule
 ID & Type & $p = (p_0,\ldots,p_7)$ & $\HS$ (bits) & Contrast \\
 \midrule
@@ -940,12 +938,6 @@ Submitted to AIMS Mathematics
 Feng, G., Hou, S.-Y., Zou, H., et al.:
 SpinQ Triangulum: a commercial three-qubit desktop quantum computer.
 arXiv:2202.02983 (2022)
-
-\bibitem{ProtocolV1}
-Falcó, A., Falcó-Pomares, D., Latorre, J.-C., et al.:
-Supplementary Material: Experimental Protocol for the First
-Grover--Rudolph Campaign on the SpinQ Triangulum Platform.
-Version 1.0 (2026). Available at the companion repository.
 
 \end{thebibliography}
 
