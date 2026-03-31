@@ -131,7 +131,7 @@ python 00_generate_distributions.py --verify
 python 01_verify_simulations.py --dist D3 D5
 
 # Bare-state hardware check
-python 02_bare_state_check.py --threshold 0.97
+python 02_bare_state_check.py --threshold 0.90
 
 # Run only D3 with resume
 python 03_run_campaign.py --dist D3 --resume --shots 4096

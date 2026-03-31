@@ -46,10 +46,10 @@ def fidelity(p, q):
 
 def get_conn() -> dict:
     params = {
-        "ip":       os.environ.get("SPINQ_IP", ""),
+        "ip":       os.environ.get("SPINQ_IP", "10.30.227.5"),
         "port":     os.environ.get("SPINQ_PORT", "55444"),
-        "account":  os.environ.get("SPINQ_ACCOUNT", ""),
-        "password": os.environ.get("SPINQ_PASSWORD", ""),
+        "account":  os.environ.get("SPINQ_ACCOUNT", "user1"),
+        "password": os.environ.get("SPINQ_PASSWORD", "lacasito99"),
         "task_name": "bare_check",
         "task_desc": "Pre-session bare-state check",
     }

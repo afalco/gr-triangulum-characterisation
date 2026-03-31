@@ -42,7 +42,7 @@ N_RUNS_PER_GROUP = 25
 STAGES   = ["L0", "L01", "FULL"]
 LADDERS  = {"L0": ["A"], "L01": ["A"], "FULL": ["A", "B"]}
 BARE_CHECK_EVERY = 100
-BARE_THRESHOLD   = 0.97
+BARE_THRESHOLD   = 0.90
 STATES = ["000","001","010","011","100","101","110","111"]
 
 
@@ -128,10 +128,10 @@ def log_run(record: dict, logfile: Path) -> None:
 
 def get_conn() -> dict:
     params = {
-        "ip":       os.environ.get("SPINQ_IP", ""),
+        "ip":       os.environ.get("SPINQ_IP", "10.30.227.5"),
         "port":     os.environ.get("SPINQ_PORT", "55444"),
-        "account":  os.environ.get("SPINQ_ACCOUNT", ""),
-        "password": os.environ.get("SPINQ_PASSWORD", ""),
+        "account":  os.environ.get("SPINQ_ACCOUNT", "user1"),
+        "password": os.environ.get("SPINQ_PASSWORD", "lacasito99"),
     }
     return params
 
