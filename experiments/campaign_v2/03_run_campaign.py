@@ -85,14 +85,17 @@ def gr_angles(p: np.ndarray) -> dict:
         "00": safe_acos(p[0], sLL), "01": safe_acos(p[2], sLR),
         "10": safe_acos(p[4], sRL), "11": safe_acos(p[6], sRR),
     }
-    alpha = np.array([theta2["00"], theta2["01"],
-                      theta2["10"], theta2["11"]]) / 2.0
     H = np.array([[1,1,1,1],[1,-1,1,-1],[1,1,-1,-1],[1,-1,-1,1]]) / 4.0
-    phi = H @ alpha
+    alpha_A = np.array([theta2["00"], theta2["11"],
+                        theta2["10"], theta2["01"]]) / 2.0
+    la_A = 2.0 * (H @ alpha_A)
+    alpha_B = np.array([theta2["00"], theta2["11"],
+                        theta2["01"], theta2["10"]]) / 2.0
+    la_B = 2.0 * (H @ alpha_B)
     return {
         "theta0": safe_acos(sL, 1.0), "theta1_0": safe_acos(sLL, sL),
         "theta1_1": safe_acos(sRL, sR), "theta2": theta2,
-        "phi": phi, "ladder_angles": 2.0 * phi,
+        "ladder_angles_A": la_A, "ladder_angles_B": la_B,
     }
 
 
