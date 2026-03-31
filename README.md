@@ -235,21 +235,3 @@ sufficient detail to allow independent replication on any compatible
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
----
-
-## Citation
-
-If you use this pipeline in your work, please cite the companion paper:
-
-```bibtex
-@article{falco2026grover,
-  title   = {Practical {Grover--Rudolph} state preparation on a 3-qubit
-             {NMR} quantum computer: from rigorous ancilla-free compilation
-             to staged experimental diagnostics},
-  author  = {Falc\'o, Antonio and Falc\'o-Pomares, Daniela and
-             Latorre, Juan-Carlos and Feng, Yuefeng and others},
-  year    = {2026},
-  note    = {In preparation}
-}
-```
