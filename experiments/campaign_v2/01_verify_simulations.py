@@ -20,6 +20,8 @@ Usage (PowerShell)
     python 01_verify_simulations.py --dist D3 D5   # subset only
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys

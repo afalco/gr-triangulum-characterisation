@@ -24,6 +24,8 @@ Usage (PowerShell)
         --flat    artifacts/campaign_v2/runs_flat_v2.csv
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path

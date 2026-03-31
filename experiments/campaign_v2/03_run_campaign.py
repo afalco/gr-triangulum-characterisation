@@ -34,6 +34,8 @@ Usage (PowerShell)
     python 03_run_campaign.py --dry-run
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import os

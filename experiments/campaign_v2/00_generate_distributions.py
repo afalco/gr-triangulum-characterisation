@@ -18,6 +18,8 @@ Usage (PowerShell)
     python 00_generate_distributions.py --outdir artifacts/campaign_v2
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json

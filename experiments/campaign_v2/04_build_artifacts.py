@@ -16,6 +16,8 @@ Usage (PowerShell)
     python 04_build_artifacts.py --logfile path/to/campaign_v2_runs.jsonl
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path
