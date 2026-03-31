@@ -96,7 +96,6 @@ gr-triangulum-characterisation/
 │       └── README.md
 │
 ├── docs/
-│   ├── experimental_protocol_v1.pdf   # first campaign protocol
 │   ├── experimental_protocol_v2.pdf   # this campaign protocol
 │   └── experimental_protocol_v2.tex   # LaTeX source
 │
