@@ -90,9 +90,9 @@ def gr_angles(p: np.ndarray) -> dict:
     Returns
     -------
     dict with keys:
-        theta0        : float  (degrees) — root rotation on q0
-        theta1_0      : float  (degrees) — level-1 rotation when q0=0
-        theta1_1      : float  (degrees) — level-1 rotation when q0=1
+        theta0          : float  (degrees) — root rotation on q0
+        theta1_0        : float  (degrees) — level-1 rotation when q0=0
+        theta1_1        : float  (degrees) — level-1 rotation when q0=1
         ladder_angles_A : np.ndarray (4,) (degrees) — UCRy angles for ladder A
         ladder_angles_B : np.ndarray (4,) (degrees) — UCRy angles for ladder B
     """
@@ -143,7 +143,12 @@ def gr_angles(p: np.ndarray) -> dict:
 # Circuit builder
 # ---------------------------------------------------------------------------
 
-def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
+def _build_circuit(
+    angles: dict,
+    stage: str,
+    ladder: str,
+    include_measure: bool = True,
+) -> Circuit:
     """
     Build a SpinQit Circuit for the given GR stage and ladder.
 
@@ -152,13 +157,14 @@ def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
     angles : dict — output of gr_angles()
     stage  : "L0" | "L01" | "FULL"
     ladder : "A"  | "B"
+    include_measure : whether to append terminal measurements
     """
     def deg(d: float) -> float:
         return float(d) * pi / 180.0
 
     circ = Circuit()
     q    = circ.allocateQubits(3)
-    c    = circ.allocateClbits(3)
+    c    = circ.allocateClbits(3) if include_measure else None
 
     t0   = angles["theta0"]
     t1_0 = angles["theta1_0"]
@@ -168,15 +174,13 @@ def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
     circ << (Ry, q[0], deg(t0))
 
     if stage == "L0":
-        circ.measure(q[0], c[0])
-        circ.measure(q[1], c[1])
-        circ.measure(q[2], c[2])
+        if include_measure:
+            circ.measure(q[0], c[0])
+            circ.measure(q[1], c[1])
+            circ.measure(q[2], c[2])
         return circ
 
-    # ── Level 1: 1-ctrl UCRy on q1 conditioned on q0 ────────────────────────
-    # Exact gate sequence from manuscript Figure 2b:
-    #   q1: Ry(t1_0/2), CX, Ry(720-t1_0/2), CX, Ry(t1_1/2), CX, Ry(720-t1_1/2), CX
-    #   q0: X before 1st CX pair, X before 2nd CX pair
+    # ── Level 1: 1-control UCRy on q1 conditioned on q0 ─────────────────────
     circ << (Ry, q[1], deg(t1_0 / 2.0))
     circ << (X,  q[0])
     circ << (CX, (q[0], q[1]))
@@ -189,12 +193,13 @@ def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
     circ << (CX, (q[0], q[1]))
 
     if stage == "L01":
-        circ.measure(q[0], c[0])
-        circ.measure(q[1], c[1])
-        circ.measure(q[2], c[2])
+        if include_measure:
+            circ.measure(q[0], c[0])
+            circ.measure(q[1], c[1])
+            circ.measure(q[2], c[2])
         return circ
 
-    # ── Level 2: 2-ctrl UCRy on q2 — ladders A and B ─────────────────────────
+    # ── Level 2: 2-control UCRy on q2 — ladders A and B ─────────────────────
     if ladder == "A":
         # ctrl sequence (q1, q0, q1, q0)
         # WHT ordering [t00, t11, t10, t01]
@@ -220,9 +225,11 @@ def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
         circ << (Ry, q[2], la[3])
         circ << (CX, (q[1], q[2]))
 
-    circ.measure(q[0], c[0])
-    circ.measure(q[1], c[1])
-    circ.measure(q[2], c[2])
+    if include_measure:
+        circ.measure(q[0], c[0])
+        circ.measure(q[1], c[1])
+        circ.measure(q[2], c[2])
+
     return circ
 
 
@@ -233,7 +240,7 @@ def _build_circuit(angles: dict, stage: str, ladder: str) -> Circuit:
 def run_simulator(angles: dict, stage: str, ladder: str = "A",
                   shots: int = 4096) -> np.ndarray:
     """Run ideal SpinQit BasicSimulator. Returns MSB-ordered prob vector."""
-    circ   = _build_circuit(angles, stage, ladder)
+    circ   = _build_circuit(angles, stage, ladder, include_measure=True)
     comp   = get_compiler("native")
     exe    = comp.compile(circ, 0)
     engine = get_basic_simulator()
@@ -253,7 +260,7 @@ def run_hardware(angles: dict, stage: str, ladder: str,
     conn keys: ip, port, account, password,
                task_name (optional), task_desc (optional)
     """
-    circ   = _build_circuit(angles, stage, ladder)
+    circ   = _build_circuit(angles, stage, ladder, include_measure=False)
     comp   = get_compiler("native")
     exe    = comp.compile(circ, 0)
     engine = get_nmr()
@@ -283,13 +290,14 @@ def run_hardware(angles: dict, stage: str, ladder: str,
 
 
 def run_bare_hardware(conn: dict, shots: int = 4096) -> np.ndarray:
-    """Bare measurement (identity circuit) on hardware for pre-session check."""
+    """
+    Bare identity circuit on hardware for pre-session check.
+
+    Important: the Triangulum NMR backend does not accept explicit MEASURE
+    operations, so this circuit must contain no terminal measurements.
+    """
     circ = Circuit()
-    q    = circ.allocateQubits(3)
-    c    = circ.allocateClbits(3)
-    circ.measure(q[0], c[0])
-    circ.measure(q[1], c[1])
-    circ.measure(q[2], c[2])
+    circ.allocateQubits(3)
 
     comp   = get_compiler("native")
     exe    = comp.compile(circ, 0)
