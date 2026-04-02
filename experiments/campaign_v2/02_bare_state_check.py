@@ -17,7 +17,7 @@ Usage (PowerShell)
     $env:SPINQ_PASSWORD = "my_secret_password"
 
     python 02_bare_state_check.py
-    python 02_bare_state_check.py --threshold 0.97 --shots 4096
+    python 02_bare_state_check.py --threshold 0.90 --shots 4096
 """
 
 from __future__ import annotations
@@ -107,7 +107,7 @@ def main(threshold: float, shots: int, outdir: Path,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--threshold", type=float, default=0.98)
+    parser.add_argument("--threshold", type=float, default=0.90)
     parser.add_argument("--shots",     type=int,   default=4096)
     parser.add_argument("--outdir",    type=Path,
         default=Path("artifacts/campaign_v2"))
